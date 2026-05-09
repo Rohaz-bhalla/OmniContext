@@ -1,11 +1,10 @@
+import os
+import shutil
+from typing import TypedDict, Annotated
 from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from dotenv import load_dotenv
-import os
-
-from fastapi import FastAPI, HTTPException
-from fastapi.middleware.cors import CORSMiddleware # Add this import
-from pydantic import BaseModel
 
 # Import our custom services
 from services.ingestion import process_drive_folder
@@ -13,7 +12,6 @@ from services.chat import get_answer
 
 # We'll use these later for the Unbiased AI decision loop
 from langgraph.graph import StateGraph, END
-from typing import TypedDict, Annotated
 
 load_dotenv()
 
@@ -21,7 +19,7 @@ app = FastAPI(title="OmniContext AI Engine", description="Unbiased Drive-RAG API
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], # Allows your Next.js app
+    allow_origins=["http://localhost:3000"], 
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -43,13 +41,24 @@ async def root():
 async def health_check():
     return {"status": "healthy"}
 
-# --- INGESTION ROUTE ---
+# --- MERGED INGESTION ROUTE ---
 @app.post("/api/ingest")
 async def ingest_document(request: IngestRequest):
     """
-    Triggers the download and chunking of a Google Drive Folder.
+    1. Wipes the old database.
+    2. Downloads and chunks the Google Drive Folder.
+    3. Rebuilds the vector store.
     """
     try:
+        # STEP 1: Reset the Database
+        persist_directory = "./chroma_db"
+        if os.path.exists(persist_directory):
+            shutil.rmtree(persist_directory)
+            print(f"Cleared existing database at {persist_directory}")
+        
+        # STEP 2: Process the Folder
+        # Note: Ensure process_drive_folder also handles the logic 
+        # of saving chunks to the Chroma DB.
         chunks = process_drive_folder(request.folder_id)
         
         if not chunks:
@@ -57,13 +66,13 @@ async def ingest_document(request: IngestRequest):
 
         return {
             "status": "success",
-            "message": f"Successfully processed and split folder into {len(chunks)} chunks.",
+            "message": f"Database reset and folder processed into {len(chunks)} chunks.",
             "preview_chunk": chunks[0].page_content[:200] + "..." if chunks else ""
         }
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# --- NEW: CHAT ROUTE ---
+# --- CHAT ROUTE ---
 @app.post("/api/chat")
 async def chat_with_omni(request: ChatRequest):
     """
