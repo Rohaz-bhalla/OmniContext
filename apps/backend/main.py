@@ -3,6 +3,10 @@ from pydantic import BaseModel
 from dotenv import load_dotenv
 import os
 
+from fastapi import FastAPI, HTTPException
+from fastapi.middleware.cors import CORSMiddleware # Add this import
+from pydantic import BaseModel
+
 # Import our custom services
 from services.ingestion import process_drive_folder
 from services.chat import get_answer
@@ -14,6 +18,14 @@ from typing import TypedDict, Annotated
 load_dotenv()
 
 app = FastAPI(title="OmniContext AI Engine", description="Unbiased Drive-RAG API")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"], # Allows your Next.js app
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # --- DATA MODELS ---
 class IngestRequest(BaseModel):
