@@ -1,8 +1,7 @@
-# apps/backend/services/ingestion.py
-
 import io
 import tempfile
 import os
+import json # REQUIRED for reading the secret from the environment
 from google.oauth2 import service_account
 from googleapiclient.discovery import build
 from googleapiclient.http import MediaIoBaseDownload
@@ -15,8 +14,18 @@ from langchain_chroma import Chroma
 
 # 1. Authenticate our Robot with Google Drive
 SCOPES = ['https://www.googleapis.com/auth/drive.readonly']
-creds = service_account.Credentials.from_service_account_file(
-    'credentials.json', scopes=SCOPES)
+
+# SECURE CREDENTIALS LOGIC
+if "GCP_CREDENTIALS_JSON" in os.environ:
+    # We are on Hugging Face: Load from the secure environment secret
+    creds_info = json.loads(os.environ["GCP_CREDENTIALS_JSON"])
+    creds = service_account.Credentials.from_service_account_info(
+        creds_info, scopes=SCOPES)
+else:
+    # We are on local laptop: Fallback to the physical file
+    creds = service_account.Credentials.from_service_account_file(
+        'credentials.json', scopes=SCOPES)
+
 drive_service = build('drive', 'v3', credentials=creds)
 
 def process_drive_folder(folder_id: str):
