@@ -30,7 +30,7 @@ export default function OmniContextUI() {
     setIngestStatus(null);
     try {
       // Updated to your specific local backend address
-      const res = await fetch("http://127.0.0.1:8000/api/ingest", {
+      const res = await fetch("/api/ingest", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ folder_id: folderId }),
@@ -53,7 +53,7 @@ export default function OmniContextUI() {
     setIsChatting(true);
     try {
       // Updated to your specific local backend address
-      const res = await fetch("http://127.0.0.1:8000/api/chat", {
+      const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ question: text }),

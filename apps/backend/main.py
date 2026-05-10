@@ -22,7 +22,11 @@ app = FastAPI(title="OmniContext AI Engine", description="Unbiased Drive-RAG API
 # --- CORS CONFIGURATION ---
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"], # Allows local Next.js dev server
+    allow_origins=[
+        "http://localhost:3000",
+        "https://rohazbhalla-omnicontext.hf.space",
+        "https://rohazbhalla-omnicontext-hf-space.hf.space" # Some HF internal routing uses this format
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
